@@ -554,6 +554,7 @@ class loginDB
     		}
 
 	}
+
 	public function AddComment($username, $password, $TicketID, $addcomment)
 	{
 		$username = $this->db->real_escape_string($username);
