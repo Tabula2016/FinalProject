@@ -13,7 +13,7 @@ try {
        $collection = $m->ticketingsystem1->login;
        	
 	echo "collection Login selected sucessfully";
-	$Users = array('username' => );
+	$Users = array('username' => 'mohmmad');
 	$cursor = $collection->find($Users);
        	foreach ($cursor as $id => $value) {
                 echo "$id: ";

@@ -470,7 +470,8 @@ class loginDB
 		
 		else
 		{
-			 $query = "Select * from Tickets where createdby = '$username'";
+			 $query = "Select * from Tickets where createdby = '$username';";
+			
                         $results = $this->db->query($query);
 
                         if($results->num_rows > 0)
@@ -478,9 +479,8 @@ class loginDB
                                 while($row = $results->fetch_assoc())
                                 {
                                         echo " - ID: " . $row["TicketID"] . " - title: " . $row["title"] . " - Category: " . $row["Category"] . " - Severity: " . $row["Severity"].PHP_EOL;
-                                        echo  " - Created by: " . $row["Createdby"].PHP_EOL;
-                                        echo " - description: " . $row["description"] . " -comments: " . $row["comments"].PHP_EOL;
-                                        echo  " - status: " . $row["status"] . " - Assigned to: " . $row["Assignedto"].PHP_EOL;
+                                        echo " - description: " . $row["description"].PHP_EOL;
+                                        echo  " - status: " . $row["status"].PHP_EOL;
                                         echo "".PHP_EOL;
                                 }
 
@@ -491,7 +491,69 @@ class loginDB
 			}
 		}
 	}
+
+	public function ViewTicketComment()
+	{
+		try
+		{
+			$uri ="mongodb://mohmmad1:test123@ds011872.mlab.com:11872/ticketingsystem1";
+			$m = new MongoClient($uri);
+			echo "\n" . "Connected to Database sucessfully" . "\n".PHP_EOL;
+			$collection = $m->ticketingsystem1->Comments;
+			echo "Connected to Collection sucessfully" . "\n".PHP_EOL;
+
+			$cursor = $collection->find();
+			foreach($cursor as $id => $value)
+			{
+				echo "Displaying Result for Comments:" . "\n".PHP_EOL;
+				echo "TicketID: " . $value['TicketID_FK_1'] . "  ";
+				echo "Comment: " . $value['comments'].PHP_EOL; 
+			}
+		}
+
+		catch (MongoConnectionException $e) {die("Error connecting to mongodb"); }
+		catch (MongoConnectionException $e) {die('Error: ' . $e->getMessage());}
+	}
 	
+	public function sendToMongo()
+	{
+  		 try 
+    		{
+      			//Connect to Mongo 
+      			$connection = new MongoClient( "mongodb://mohmmad1:test123@ds011872.mlab.com:11872/ticketingsystem1");
+      			$mongodb = $connection->selectDB('Comments');
+      			echo "collection Login selected sucessfully" . "\n".PHP_EOL;
+      			//Connect to MySQL
+      			$con=mysqli_connect("localhost","mohmmad","test123","TicketingSystem");
+      			//Convert table to PHP Array
+      			$query = "select * from CommentsTable;";
+      			$result = mysqli_query($con,$query);
+      			$rows = array();
+      
+     			 //Encode to JSON
+      			while($r = mysqli_fetch_array($result)) 
+      			{
+				$rows[] = $r;
+      			}
+      			//echo json_encode($rows).PHP_EOL;
+      			$file = file_get_contents('data.json');
+      			$data = json_decode($file);
+      			unset($file);
+      			file_put_contents('data.json', json_encode($rows));
+      			unset($rows);
+      			exec("mongoimport -h ds011872.mlab.com:11872 -d ticketingsystem1 -c Comments -u mohmmad1 -p test123 --quiet --jsonArray --drop --file data.json");
+      			mysqli_close($con);
+		}
+		catch (MongoConnectionException $e) 
+    		{
+      		die('Error connecting to MongoDB server');
+    		} 
+    		catch (MongoConnectionException $e) 
+    		{ 
+      		die('Error: ' . $e->getMessage());
+    		}
+
+	}
 	public function AddComment($username, $password, $TicketID, $addcomment)
 	{
 		$username = $this->db->real_escape_string($username);
@@ -518,9 +580,11 @@ class loginDB
 		
 		else
 		{
-			 $query = "insert into CommentsTable(comments, TicketID_FK_1) values('$addcomment',(select TicketID from Tickets where TicketID = '$TicketID'));";
+			$query = "insert into CommentsTable(comments, TicketID_FK_1) values('$addcomment',(select TicketID from Tickets where TicketID = '$TicketID'));";
                         $results = $this->db->query($query);
 			echo "You have add the following comment: " . $addcomment . " to ticket ID: " . $TicketID.PHP_EOL;
+			$this->sendToMongo();
+			echo $this->ViewTicketComment();
 		}
 	}
 

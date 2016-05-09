@@ -260,6 +260,11 @@ switch ($command)
   $login = new loginDB("login.ini");
   $login->EditTicket($username,$password,$fieldname,$input,$TicketID,$cArgs[0]);
   break;
+
+  case 'ViewTicketComment':
+  $login = new loginDB("login.ini");
+  $login->ViewTicketComment();
+  break;
 }
 
 ?>
